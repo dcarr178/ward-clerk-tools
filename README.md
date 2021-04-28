@@ -15,7 +15,7 @@ application so the implicit system contracts these tools rely on could break at 
 the tools worthless without additional code maintenance and tweaks.
 
 ## Initialization
-Prior to installing this software, you must have [https://git-scm.com/downloads](git) and [https://nodejs.org/en/download/](nodejs/npm) installed on your computer.
+Prior to installing this software, you must have [git](https://git-scm.com/downloads) and [nodejs/npm](https://nodejs.org/en/download/) installed on your computer.
 
 ```bash
 git clone git@github.com:dcarr178/ward-clerk-tools.git
