@@ -3,7 +3,10 @@ import cypress from "cypress"
 
 setEnvVars()
 
-export const fetchMembershipListToDataFile = (): Promise<void> => {
+export const updateLoginData = (): Promise<void> => {
+  // The purpose of running cypress is to execute the lds authentication saml process in a browser and capture
+  // valid, authenticated request headers that we can use in future api calls.
+  console.log(`updating login`)
   return cypress
     .run({
       spec: './src/cypress-tests/membership-list_spec.js',

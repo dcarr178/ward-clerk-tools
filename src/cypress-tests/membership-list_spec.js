@@ -1,20 +1,15 @@
 describe('Log into church website', () => {
 
-  // data to collect from cypress
-  const data = {
-    urls: [],
-    memberList: {
-      req: {},
-      response: {}
-    }
-  }
-
   // path to write data to
-  const dataPath = "./cypress-data.json"
+  const loginDataPath = "./data/login.json"
+  const loginData = {
+    unitNumber: 0,
+    requestHeaders: {}
+  }
 
   // write data to file after tests have ran
   after(() => {
-    cy.writeFile(dataPath, JSON.stringify(data, null, 2))
+    cy.writeFile(loginDataPath, JSON.stringify(loginData, null, 2))
   })
 
   it('Fetch member list', () => {
@@ -22,17 +17,14 @@ describe('Log into church website', () => {
     // start cypress
     cy.server()
 
-    // configure intercept for urls
-    cy.intercept('*', (req) => {
-      data.urls.push(`${req.method} ${req.url}`)
-    })
-
     // configure intercept for member-list
     cy.intercept('https://lcr.churchofjesuschrist.org/services/umlu/report/member-list*', (req) => {
-      data.memberList.req = req
-      req.continue((res) => {
-        data.memberList.response = res
-      })
+
+      // capture request headers and unitNumber to local file
+      const url = new URL(req.url);
+      loginData.unitNumber = url.searchParams.get('unitNumber');
+      loginData.requestHeaders = req.headers
+
     })
 
     // execute cypress test
