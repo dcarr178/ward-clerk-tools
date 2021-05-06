@@ -1,4 +1,4 @@
-import { fetchMembershipList, fetchCallings } from './lcr-api'
+import { fetchMembershipList, fetchCallings, fetchClassAttendance, parseClassAttendance } from './lcr-api'
 import { tsvFormat, csvFormat } from 'd3-dsv'
 import { writeFileSync } from "fs";
 import { Calling } from "./types/callings";
@@ -38,19 +38,22 @@ export const writeCallingsFile = async () => {
   console.log(`callings file has been written to ${outputFilePath}`)
 }
 
+export const writeAttendanceFile = async () => {
+  const outputFilePath = "./data/attendance.csv"
+
+  const attendance = await fetchClassAttendance()
+  const members = parseClassAttendance(attendance)
+
+  // write file
+  const csv = csvFormat(members)
+  writeFileSync(outputFilePath, csv)
+  console.log(`attendance file has been written to ${outputFilePath}`)
+
+}
+
 export const run = async (): Promise<void> => {
 
-  // const membershipList = await fetchMembershipList()
-  // for (const member of membershipList) {
-  //   console.log(member.nameGivenPreferredLocal)
-  // }
-
-  // console.log(callings)
 
   // out of unit callings https://lcr.churchofjesuschrist.org/services/orgs/out-of-unit-callings?includeTypes=LIVING_INSIDE&lang=eng&unitNumber=374938
 
-  // class attendance for one member Request URL: https://lcr.churchofjesuschrist.org/services/umlu/v1/class-and-quorum/attendance/details/df17a7a1-316b-404f-a11f-c7ec7872a333?lang=eng&unitNumber=374938
-
-  // Attendance https://lcr.churchofjesuschrist.org/services/umlu/v1/class-and-quorum/attendance/overview/unitNumber/374938?lang=eng
-  // i think we can get class attendance from this
 }

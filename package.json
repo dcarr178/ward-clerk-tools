@@ -48,10 +48,12 @@
   },
   "dependencies": {
     "@types/d3-dsv": "^2.0.1",
+    "@types/jsdom": "^16.2.10",
     "axios": "^0.21.1",
     "cypress": "^7.1.0",
     "d3-dsv": "^2.0.0",
     "dotenv": "^8.2.0",
+    "node-html-parser": "^3.2.0",
     "qs": "^6.10.1"
   }
 }

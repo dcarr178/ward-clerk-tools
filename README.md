@@ -44,11 +44,22 @@ callings for the longest and perform a manual review if these individuals still 
    This creates a csv file with all ward callings, member name, date called, and whether or not they have been set apart
 
 
-3. Church systems now offer many reports that help ward members know who has moved in or moved out. However, all of these are *pull* mechanisms where ward members have to proactively run the report and often they forget to or don't remember how to. Additionally, many ward members would like to know when callings have changed in the ward and aren't always present when sustainings occur in sacrament meeting. What members want is a *push* mechanism they can subscribe to and have messages automatically pushed to their preferred channel (email, sms, slack) whenever signficant events occur including move ins, move outs, and new callings.
+3. Church systems now offer many reports that help ward members know who has moved in or moved out. However, all of these are *pull* mechanisms where ward members have to proactively run the report and often they forget to or don't remember how to. Additionally, many ward members would like to know when callings have changed in the ward and aren't always present when sustainings occur in sacrament meeting. What members want is a *push* mechanism they can subscribe to and have messages automatically pushed to their preferred channel (email, sms, slack) whenever significant events occur including move ins, move outs, and new callings.
+
+   ```bash
+   TODO
+   ```
 
 
 4. Class attendance doesn't always get entered correctly in a timely manner so at the end of each quarter (or nearing the end of a quarter), identify
-all members for each organization who have not attended and email the organizaiton leader with that list of names. By reviewing this information, the organization leader can enter attendance before the quarterly report is due.
+all members for each organization who have not attended and email the organization leader with that list of names. By reviewing this information, the organization leader can enter attendance before the quarterly report is due.
+
+   ```bash
+   npm run attendance
+   ```
+   This creates a csv file with all members, the classes they belong to, and whether they have attended this quarter.
+
+
 
 ## Push communication channels
 These are the communication channels we'd like to eventually support:

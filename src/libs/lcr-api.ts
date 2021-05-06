@@ -4,6 +4,22 @@ import { LoginData } from './types/lcr-api'
 import { MemberRecord } from './types/membership-list'
 import axios from "axios"
 import { Organization } from "./types/callings";
+import { parse as parseHtml } from 'node-html-parser';
+import { AttendanceProps } from './types/attendance'
+
+interface OrgList {
+  [orgId: string]: {
+    org: string,
+    suborg: string
+  }
+}
+
+interface MemberList {
+  Name: string
+  "Has attended": boolean
+  Organization: string
+  Class: string
+}
 
 const _loginData: LoginData = {
   unitNumber: 0,
@@ -31,20 +47,27 @@ const fetchLoginData = async (): Promise<LoginData> => {
   return JSON.parse(readFileSync(loginDataPath).toString())
 }
 
+let updatedLogin = false
 const updateLogin = async () => {
-  _loginData.unitNumber = 0
-  return updateLoginData()
+  if (updatedLogin) {
+    console.log(`login already tried once, exiting now`)
+    process.exit(1)
+  } else {
+    updatedLogin = true
+    _loginData.unitNumber = 0
+    return updateLoginData()
+  }
 }
 
 // LCR api endpoints
 const lcrAPI = axios.create({
-  baseURL: 'https://lcr.churchofjesuschrist.org/services/',
+  baseURL: 'https://lcr.churchofjesuschrist.org/',
   timeout: 30000
 })
 
 export const fetchMembershipList = async (): Promise<MemberRecord[]> => {
   const login = await loginData()
-  const apiPath = `umlu/report/member-list?lang=eng&unitNumber=${login.unitNumber}`
+  const apiPath = `services/umlu/report/member-list?lang=eng&unitNumber=${login.unitNumber}`
   console.log(`fetching membership list`)
   const membershipList: MemberRecord[] = await lcrAPI.get(apiPath, {
     headers: login.requestHeaders
@@ -64,7 +87,7 @@ export const fetchMembershipList = async (): Promise<MemberRecord[]> => {
 
 export const fetchCallings = async (): Promise<Organization[]> => {
   const login = await loginData()
-  const apiPath = `orgs/sub-orgs-with-callings?ip=true&lang=eng`
+  const apiPath = `services/orgs/sub-orgs-with-callings?ip=true&lang=eng`
   console.log(`fetching callings list`)
   const callings: Organization[] = await lcrAPI.get(apiPath, {
     headers: login.requestHeaders
@@ -81,4 +104,71 @@ export const fetchCallings = async (): Promise<Organization[]> => {
   await updateLogin()
   return fetchCallings()
 
+}
+
+export const fetchClassAttendance = async (): Promise<AttendanceProps> => {
+  const login = await loginData()
+  const apiPath = `report/class-and-quorum-attendance/overview?lang=eng`
+  console.log(`fetching class attendance`)
+  const html: string = await lcrAPI.get(apiPath, {
+    headers: login.requestHeaders
+  })
+    .then(res => res.data)
+  writeFileSync("./data/attendance.html", html)
+
+  // parse html
+  const dom = parseHtml(html)
+
+  // parse script tag out of html
+  const jsText = dom.querySelector('#__NEXT_DATA__')?.innerText
+
+  if (!jsText) {
+    console.log(`fetch class attendance failed`)
+    await updateLogin()
+    return fetchClassAttendance()
+  }
+
+  const attendanceProps: AttendanceProps = JSON.parse(jsText)
+  writeFileSync("./data/attendance.json", JSON.stringify(attendanceProps, null, 2))
+  return attendanceProps
+
+}
+
+export const parseClassAttendance = (attendanceProps: AttendanceProps): MemberList[] => {
+
+  // parse orgs
+  const orgList: OrgList = {}
+  for (const org of attendanceProps.props.pageProps.initialProps.rootUnitOrgNodes) {
+    orgList[org.unitOrgUuid] = {
+      org: org.unitOrgName,
+      suborg: ""
+    }
+    if (org.children) {
+      for (const suborg of org.children) {
+        orgList[suborg.unitOrgUuid] = {
+          org: org.unitOrgName,
+          suborg: suborg.unitOrgName
+        }
+      }
+    }
+  }
+
+  // calculate member attendance
+  const memberList: MemberList[] = []
+  for (const member of attendanceProps.props.pageProps.initialProps.attendees) {
+    let hasAttended = false
+    for (const entry of member.entries) {
+      if (entry.isMarkedAttended) hasAttended = true
+    }
+
+    for (const orgId of member.unitOrgsCombined) {
+      memberList.push({
+        Name: member.displayName,
+        "Has attended": hasAttended,
+        Organization: orgList[orgId]?.org,
+        "Class": orgList[orgId]?.suborg
+      })
+    }
+  }
+  return memberList
 }
