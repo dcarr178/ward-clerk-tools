@@ -10,7 +10,7 @@ if (process.argv.length < 3) {
 }
 switch (process.argv[2]) {
     case "callings": {
-        main_1.writeCallingsFile();
+        main_1.writeCallingsFile2();
         break;
     }
     case "attendance": {

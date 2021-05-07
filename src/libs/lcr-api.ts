@@ -4,28 +4,14 @@ import { LoginData } from './types/lcr-api'
 import { MemberRecord } from './types/membership-list'
 import axios from "axios"
 import { Organization } from "./types/callings";
-import { parse as parseHtml } from 'node-html-parser';
+import { parse as parseHtml } from 'node-html-parser'
 import { AttendanceProps } from './types/attendance'
-
-interface OrgList {
-  [orgId: string]: {
-    org: string,
-    suborg: string
-  }
-}
-
-interface MemberList {
-  Name: string
-  "Has attended": boolean
-  Organization: string
-  Class: string
-}
+import { Calling } from './types/members-with-callings'
 
 const _loginData: LoginData = {
   unitNumber: 0,
   requestHeaders: {}
 }
-
 
 // utility functions
 const loginData = async (): Promise<LoginData> => {
@@ -85,8 +71,32 @@ export const fetchMembershipList = async (): Promise<MemberRecord[]> => {
 
 }
 
+export const fetchCallings2 = async (): Promise<Calling[]> => {
+  const login = await loginData()
+
+  const apiPath = `services/report/members-with-callings?lang=eng&unitNumber=${login.unitNumber}`
+  console.log(`fetching callings list`)
+  const callings: Calling[] = await lcrAPI.get(apiPath, {
+    headers: login.requestHeaders
+  })
+    .then(res => res.data)
+  if (Array.isArray(callings)) {
+    writeFileSync("./data/callings.json", JSON.stringify(callings, null, 2))
+    return callings
+  }
+
+  // response is not array so loginData is invalid and needs to be updated
+  console.log(`fetch callings failed`)
+  await updateLogin()
+  return fetchCallings2()
+
+}
+
 export const fetchCallings = async (): Promise<Organization[]> => {
   const login = await loginData()
+
+  // this one includes missionaries
+  // Request URL: https://lcr.churchofjesuschrist.org/services/report/members-with-callings?lang=eng&unitNumber=374938
   const apiPath = `services/orgs/sub-orgs-with-callings?ip=true&lang=eng`
   console.log(`fetching callings list`)
   const callings: Organization[] = await lcrAPI.get(apiPath, {
@@ -134,41 +144,4 @@ export const fetchClassAttendance = async (): Promise<AttendanceProps> => {
 
 }
 
-export const parseClassAttendance = (attendanceProps: AttendanceProps): MemberList[] => {
 
-  // parse orgs
-  const orgList: OrgList = {}
-  for (const org of attendanceProps.props.pageProps.initialProps.rootUnitOrgNodes) {
-    orgList[org.unitOrgUuid] = {
-      org: org.unitOrgName,
-      suborg: ""
-    }
-    if (org.children) {
-      for (const suborg of org.children) {
-        orgList[suborg.unitOrgUuid] = {
-          org: org.unitOrgName,
-          suborg: suborg.unitOrgName
-        }
-      }
-    }
-  }
-
-  // calculate member attendance
-  const memberList: MemberList[] = []
-  for (const member of attendanceProps.props.pageProps.initialProps.attendees) {
-    let hasAttended = false
-    for (const entry of member.entries) {
-      if (entry.isMarkedAttended) hasAttended = true
-    }
-
-    for (const orgId of member.unitOrgsCombined) {
-      memberList.push({
-        Name: member.displayName,
-        "Has attended": hasAttended,
-        Organization: orgList[orgId]?.org,
-        "Class": orgList[orgId]?.suborg
-      })
-    }
-  }
-  return memberList
-}

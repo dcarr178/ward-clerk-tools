@@ -32,7 +32,11 @@ vi .env # enter your church login credentials
    ```bash
    npm run callings
    ```
-   This creates a csv file with all ward callings, member name, date called, and whether or not they have been set apart
+   This creates a csv file with all ward callings, member name, date called, and whether they have been set apart.
+
+   NOTE: You can also access this report at https://lcr.churchofjesuschrist.org/orgs/members-with-callings now and while you can't filter out
+   just those that need to be set apart, you can find the network response in developer tools and copy/paste it to https://www.convertcsv.com/json-to-csv.htm
+   and then download the csv and manipulate it in Microsoft Excel or Google Sheets to filter to the dataset you need.
 
 
 2. Some ward members may still have callings in the system which they have been released from. It's good to do a periodic audit of individuals who have held
@@ -41,7 +45,11 @@ callings for the longest and perform a manual review if these individuals still 
    ```bash
    npm run callings
    ```
-   This creates a csv file with all ward callings, member name, date called, and whether or not they have been set apart
+   This creates a csv file with all ward callings, member name, date called, and whether they have been set apart.
+
+   NOTE: You can also access this report at https://lcr.churchofjesuschrist.org/orgs/members-with-callings now and while you can't filter out
+   just those that need to be set apart, you can find the network response in developer tools and copy/paste it to https://www.convertcsv.com/json-to-csv.htm
+   and then download the csv and manipulate it in Microsoft Excel or Google Sheets to filter to the dataset you need.
 
 
 3. Church systems now offer many reports that help ward members know who has moved in or moved out. However, all of these are *pull* mechanisms where ward members have to proactively run the report and often they forget to or don't remember how to. Additionally, many ward members would like to know when callings have changed in the ward and aren't always present when sustainings occur in sacrament meeting. What members want is a *push* mechanism they can subscribe to and have messages automatically pushed to their preferred channel (email, sms, slack) whenever significant events occur including move ins, move outs, and new callings.

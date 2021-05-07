@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.parseClassAttendance = exports.fetchClassAttendance = exports.fetchCallings = exports.fetchMembershipList = void 0;
+exports.fetchClassAttendance = exports.fetchCallings = exports.fetchCallings2 = exports.fetchMembershipList = void 0;
 const tslib_1 = require("tslib");
 const fs_1 = require("fs");
 const cypress_1 = require("./cypress");
@@ -63,8 +63,28 @@ const fetchMembershipList = () => tslib_1.__awaiter(void 0, void 0, void 0, func
     return exports.fetchMembershipList();
 });
 exports.fetchMembershipList = fetchMembershipList;
+const fetchCallings2 = () => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    const login = yield loginData();
+    const apiPath = `services/report/members-with-callings?lang=eng&unitNumber=${login.unitNumber}`;
+    console.log(`fetching callings list`);
+    const callings = yield lcrAPI.get(apiPath, {
+        headers: login.requestHeaders
+    })
+        .then(res => res.data);
+    if (Array.isArray(callings)) {
+        fs_1.writeFileSync("./data/callings.json", JSON.stringify(callings, null, 2));
+        return callings;
+    }
+    // response is not array so loginData is invalid and needs to be updated
+    console.log(`fetch callings failed`);
+    yield updateLogin();
+    return exports.fetchCallings2();
+});
+exports.fetchCallings2 = fetchCallings2;
 const fetchCallings = () => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     const login = yield loginData();
+    // this one includes missionaries
+    // Request URL: https://lcr.churchofjesuschrist.org/services/report/members-with-callings?lang=eng&unitNumber=374938
     const apiPath = `services/orgs/sub-orgs-with-callings?ip=true&lang=eng`;
     console.log(`fetching callings list`);
     const callings = yield lcrAPI.get(apiPath, {
@@ -105,41 +125,3 @@ const fetchClassAttendance = () => tslib_1.__awaiter(void 0, void 0, void 0, fun
     return attendanceProps;
 });
 exports.fetchClassAttendance = fetchClassAttendance;
-const parseClassAttendance = (attendanceProps) => {
-    var _a, _b;
-    // parse orgs
-    const orgList = {};
-    for (const org of attendanceProps.props.pageProps.initialProps.rootUnitOrgNodes) {
-        orgList[org.unitOrgUuid] = {
-            org: org.unitOrgName,
-            suborg: ""
-        };
-        if (org.children) {
-            for (const suborg of org.children) {
-                orgList[suborg.unitOrgUuid] = {
-                    org: org.unitOrgName,
-                    suborg: suborg.unitOrgName
-                };
-            }
-        }
-    }
-    // calculate member attendance
-    const memberList = [];
-    for (const member of attendanceProps.props.pageProps.initialProps.attendees) {
-        let hasAttended = false;
-        for (const entry of member.entries) {
-            if (entry.isMarkedAttended)
-                hasAttended = true;
-        }
-        for (const orgId of member.unitOrgsCombined) {
-            memberList.push({
-                Name: member.displayName,
-                "Has attended": hasAttended,
-                Organization: (_a = orgList[orgId]) === null || _a === void 0 ? void 0 : _a.org,
-                "Class": (_b = orgList[orgId]) === null || _b === void 0 ? void 0 : _b.suborg
-            });
-        }
-    }
-    return memberList;
-};
-exports.parseClassAttendance = parseClassAttendance;
