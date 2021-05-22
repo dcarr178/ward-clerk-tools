@@ -25,6 +25,8 @@ cp .env-example .env
 vi .env # enter your church login credentials
 ```
 
+Cypress may have additional installation requirements depending on your operating system. Check https://docs.cypress.io/guides/getting-started/installing-cypress for more information.
+
 ## Use cases
 
 1. The bishopric needs a quick list of who hasn't been set apart yet in their new callings, so they can schedule appointments.

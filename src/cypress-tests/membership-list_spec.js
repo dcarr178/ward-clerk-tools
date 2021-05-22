@@ -18,7 +18,7 @@ describe('Log into church website', () => {
     cy.server()
 
     // configure intercept for member-list
-    cy.intercept('https://lcr.churchofjesuschrist.org/services/umlu/report/member-list*', (req) => {
+    cy.intercept('https://lcr.churchofjesuschrist.org/services/umlu/unit-org*', (req) => {
 
       // capture request headers and unitNumber to local file
       const url = new URL(req.url);
@@ -28,10 +28,10 @@ describe('Log into church website', () => {
     })
 
     // execute cypress test
-    cy.visit('https://lcr.churchofjesuschrist.org/records/member-list')
+    cy.visit('https://lcr.churchofjesuschrist.org/records/member-list?lang=eng')
     cy.get('input[name=username]').type(`${Cypress.env('CHURCH_USERNAME')}{enter}`)
     cy.get('input[name=password]').type(`${Cypress.env('CHURCH_PASSWORD')}{enter}`)
-    cy.get('span').should('contain', 'Member List')
+    cy.get('span').should('contain', 'Leader and Clerk Resources')
 
   })
 })
