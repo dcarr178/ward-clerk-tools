@@ -5,6 +5,8 @@ import { MemberRecord } from "./types/membership-list";
 import { AttendanceProps } from "./types/attendance";
 import TextFileDiff from 'text-file-diff';
 import { Calling as MemberCalling} from './types/members-with-callings'
+import { IncomingWebhook } from '@slack/webhook'
+import sendgridMail from '@sendgrid/mail'
 
 interface CallingMemberList {
   Name: string
@@ -151,7 +153,8 @@ const writeSortedDatedMemberList = (membershipList: MemberRecord[]) => {
   const outputFilePath = `./data/members.${formattedDate}.txt`
   const members: string[] = []
   for (const member of membershipList) {
-    members.push(`${member.nameListPreferredLocal} (${member.age}) ${member.address.addressLines.join(', ')}`)
+    // do not include age or else you'll get a diff every time someone has a birthday
+    members.push(`${member.nameListPreferredLocal} ${member.address.addressLines.join(', ')}`)
   }
   writeFileSync(outputFilePath, members.sort().join("\n"))
 }
@@ -166,42 +169,108 @@ const writeSortedDatedCallingList = (callingList: MemberCalling[]) => {
   writeFileSync(outputFilePath, callings.sort().join("\n"))
 }
 
-export const run = async (): Promise<void> => {
+export const diffMembersAndCallings = async () => {
 
   // get latest member list
   const memberList = await fetchMembershipList()
   writeSortedDatedMemberList(memberList)
 
-  let body = ""
   const { membersIn, membersOut } = await diffLastTwoMemberLists()
-  if (membersIn.length > 0) {
-    body += ["NEW WARD MEMBERS", "----------------"].join("\n") + "\n"
-    body += membersIn.join("\n") + "\n\n"
-  }
-  if (membersOut.length > 0) {
-    body += ["MEMBERS MOVED OUT OF WARD", "-------------------------"].join("\n") + "\n"
-    body += membersOut.join("\n") + "\n\n"
-  }
 
   // get latest calling list
   const callingList = await fetchCallings2()
   writeSortedDatedCallingList(callingList)
   const { callings, releases } = await diffLastTwoCallingLists()
 
-  if (callings.length > 0) {
-    body += ["NEW CALLINGS", "------------"].join("\n") + "\n"
-    body += callings.join("\n") + "\n\n"
+  await postToSlack(membersIn, membersOut, callings, releases)
+
+  await sendEmail(membersIn, membersOut, callings, releases)
+
+}
+
+const slackMessage = (title: string, data: string[]) => {
+  return {
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: `*${title}*\n` + data.join("\n")
+        }
+      }
+    ]
   }
-  if (releases.length > 0) {
-    body += ["NEW RELEASES", "------------"].join("\n") + "\n"
-    body += releases.join("\n") + "\n\n"
+}
+
+const postToSlack = async (membersIn: string[], membersOut: string[], callings: string[], releases: string[]) => {
+  const url = process.env.SLACK_WEBHOOK_URL
+  const promises = []
+  if (url) {
+    const webhook = new IncomingWebhook(url)
+    if (membersIn.length) promises.push(webhook.send(slackMessage("Members moved into ward", membersIn)))
+    if (membersOut.length) promises.push(webhook.send(slackMessage("Members moved out of ward", membersOut)))
+    if (callings.length) promises.push(webhook.send(slackMessage("New callings", callings)))
+    if (releases.length) promises.push(webhook.send(slackMessage("New releases", releases)))
+  }
+  return Promise.all(promises)
+}
+
+const sendEmail = async (membersIn: string[], membersOut: string[], callings: string[], releases: string[]) => {
+  const sendgridAPIKey = process.env.SENDGRID_API_KEY
+  const sender = process.env.VERIFIED_SENDGRID_SENDER_EMAIL || ""
+  const emailTo = (process.env.SEND_EMAIL_TO || "").split(";")
+  let emailText = ""
+  let emailHTML = ""
+
+  if (membersIn.length > 0) {
+    emailText += ["NEW WARD MEMBERS", "----------------"].join("\n") + "\n"
+    emailText += membersIn.join("\n") + "\n\n"
+    emailHTML += `<h1><b>New ward members</b></h1><p>`+ membersIn.join("</p><p>") + "</p>"
+  }
+  if (membersOut.length > 0) {
+    emailText += ["MEMBERS MOVED OUT OF WARD", "-------------------------"].join("\n") + "\n"
+    emailText += membersOut.join("\n") + "\n\n"
+    emailHTML += `<h1><b>Members moved out of ward</b></h1><p>`+ membersOut.join("</p><p>") + "</p>"
   }
 
-  if (body) {
-    // TODO now that I know membersIn, membersOut, callings, and releases now I have to send email
-    console.log(body)
+  if (callings.length > 0) {
+    emailText += ["NEW CALLINGS", "------------"].join("\n") + "\n"
+    emailText += callings.join("\n") + "\n\n"
+    emailHTML += `<h1><b>New callings</b></h1><p>`+ callings.join("</p><p>") + "</p>"
+  }
+  if (releases.length > 0) {
+    emailText += ["NEW RELEASES", "------------"].join("\n") + "\n"
+    emailText += releases.join("\n") + "\n\n"
+    emailHTML += `<h1><b>New releases</b></h1><p>`+ releases.join("</p><p>") + "</p>"
+  }
+
+  if (emailText && sendgridAPIKey) {
+    console.log(emailText)
+    sendgridMail.setApiKey(sendgridAPIKey)
+    const msg = {
+      to: emailTo,
+      from: sender,
+      subject: 'Ward member changes were detected in LCR',
+      text: emailText,
+      html: emailHTML,
+    }
+    return sendgridMail
+      .send(msg)
+      .then(() => {
+        console.log(`Email sent to ${emailTo}`)
+      })
+      .catch((error) => {
+        console.error(error)
+      })
+
   } else {
     console.log(`no ward changes found`)
   }
+}
+
+
+export const run = async (): Promise<void> => {
+
+  console.log('No test code configured')
 
 }

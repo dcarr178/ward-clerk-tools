@@ -70,13 +70,36 @@ all members for each organization who have not attended and email the organizati
 
 
 ## Push communication channels
-These are the communication channels we'd like to eventually support:
+These are the communication channels we currently support for notifications of member move ins, move outs, and calling changes:
 
-1. Email via Sendgrid
-2. SMS via Twilio
-3. Slack via webhook
-4. Church Circles mobile application
-5. Other?
+### Email via Sendgrid
+Configuration steps:
+1. Go to https://sendgrid.com and sign up for a free account.
+2. Create a verified sender email. This sends an email to your email address which you have to click on to verify you own this email account.
+3. Create a sendgrid email api key
+4. Add the sendgrid details to this application environment file `.env` as follows:
+```
+SENDGRID_API_KEY="yyyyyy"
+VERIFIED_SENDGRID_SENDER_EMAIL="mySender@gmail.com"
+SEND_EMAIL_TO="user1@gmail.com;user2@zumint.com"
+```
+SEND_EMAIL_TO can be a single email address or a semicolon-delimited list of addresses.
+
+### Slack via webhook
+Follow the instructions here https://api.slack.com/messaging/webhooks. Configuration steps:
+1. Create a slack app
+2. Enable incoming webhooks
+3. Create an incoming webhook. Select which slack channel this application should post to.
+4. Step 3 will produce a unique url for your webhook. Add this to `.env`:
+```
+SLACK_WEBHOOK_URL="yyyyyyy"
+```
+
+
+### These are the communication channels we'd like to eventually support
+* SMS via Twilio
+* Church Circles mobile application
+* Other?
 
 ## Testing
 ```bash

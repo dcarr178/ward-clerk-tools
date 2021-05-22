@@ -1,11 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.run = exports.writeAttendanceFile = exports.writeCallingsFile2 = void 0;
+exports.run = exports.diffMembersAndCallings = exports.writeAttendanceFile = exports.writeCallingsFile2 = void 0;
 const tslib_1 = require("tslib");
 const lcr_api_1 = require("./lcr-api");
 const d3_dsv_1 = require("d3-dsv");
 const fs_1 = require("fs");
 const text_file_diff_1 = tslib_1.__importDefault(require("text-file-diff"));
+const webhook_1 = require("@slack/webhook");
+const mail_1 = tslib_1.__importDefault(require("@sendgrid/mail"));
 const parseClassAttendance = (attendanceProps) => {
     var _a, _b;
     // parse orgs
@@ -124,7 +126,8 @@ const writeSortedDatedMemberList = (membershipList) => {
     const outputFilePath = `./data/members.${formattedDate}.txt`;
     const members = [];
     for (const member of membershipList) {
-        members.push(`${member.nameListPreferredLocal} (${member.age}) ${member.address.addressLines.join(', ')}`);
+        // do not include age or else you'll get a diff every time someone has a birthday
+        members.push(`${member.nameListPreferredLocal} ${member.address.addressLines.join(', ')}`);
     }
     fs_1.writeFileSync(outputFilePath, members.sort().join("\n"));
 };
@@ -137,38 +140,98 @@ const writeSortedDatedCallingList = (callingList) => {
     }
     fs_1.writeFileSync(outputFilePath, callings.sort().join("\n"));
 };
-const run = () => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+const diffMembersAndCallings = () => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     // get latest member list
     const memberList = yield lcr_api_1.fetchMembershipList();
     writeSortedDatedMemberList(memberList);
-    let body = "";
     const { membersIn, membersOut } = yield diffLastTwoMemberLists();
-    if (membersIn.length > 0) {
-        body += ["NEW WARD MEMBERS", "----------------"].join("\n") + "\n";
-        body += membersIn.join("\n") + "\n\n";
-    }
-    if (membersOut.length > 0) {
-        body += ["MEMBERS MOVED OUT OF WARD", "-------------------------"].join("\n") + "\n";
-        body += membersOut.join("\n") + "\n\n";
-    }
     // get latest calling list
     const callingList = yield lcr_api_1.fetchCallings2();
     writeSortedDatedCallingList(callingList);
     const { callings, releases } = yield diffLastTwoCallingLists();
+    yield postToSlack(membersIn, membersOut, callings, releases);
+    yield sendEmail(membersIn, membersOut, callings, releases);
+});
+exports.diffMembersAndCallings = diffMembersAndCallings;
+const slackMessage = (title, data) => {
+    return {
+        blocks: [
+            {
+                type: "section",
+                text: {
+                    type: "mrkdwn",
+                    text: `*${title}*\n` + data.join("\n")
+                }
+            }
+        ]
+    };
+};
+const postToSlack = (membersIn, membersOut, callings, releases) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    const url = process.env.SLACK_WEBHOOK_URL;
+    const promises = [];
+    if (url) {
+        const webhook = new webhook_1.IncomingWebhook(url);
+        if (membersIn.length)
+            promises.push(webhook.send(slackMessage("Members moved into ward", membersIn)));
+        if (membersOut.length)
+            promises.push(webhook.send(slackMessage("Members moved out of ward", membersOut)));
+        if (callings.length)
+            promises.push(webhook.send(slackMessage("New callings", callings)));
+        if (releases.length)
+            promises.push(webhook.send(slackMessage("New releases", releases)));
+    }
+    return Promise.all(promises);
+});
+const sendEmail = (membersIn, membersOut, callings, releases) => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    const sendgridAPIKey = process.env.SENDGRID_API_KEY;
+    const sender = process.env.VERIFIED_SENDGRID_SENDER_EMAIL || "";
+    const emailTo = (process.env.SEND_EMAIL_TO || "").split(";");
+    let emailText = "";
+    let emailHTML = "";
+    if (membersIn.length > 0) {
+        emailText += ["NEW WARD MEMBERS", "----------------"].join("\n") + "\n";
+        emailText += membersIn.join("\n") + "\n\n";
+        emailHTML += `<h1><b>New ward members</b></h1><p>` + membersIn.join("</p><p>") + "</p>";
+    }
+    if (membersOut.length > 0) {
+        emailText += ["MEMBERS MOVED OUT OF WARD", "-------------------------"].join("\n") + "\n";
+        emailText += membersOut.join("\n") + "\n\n";
+        emailHTML += `<h1><b>Members moved out of ward</b></h1><p>` + membersOut.join("</p><p>") + "</p>";
+    }
     if (callings.length > 0) {
-        body += ["NEW CALLINGS", "------------"].join("\n") + "\n";
-        body += callings.join("\n") + "\n\n";
+        emailText += ["NEW CALLINGS", "------------"].join("\n") + "\n";
+        emailText += callings.join("\n") + "\n\n";
+        emailHTML += `<h1><b>New callings</b></h1><p>` + callings.join("</p><p>") + "</p>";
     }
     if (releases.length > 0) {
-        body += ["NEW RELEASES", "------------"].join("\n") + "\n";
-        body += releases.join("\n") + "\n\n";
+        emailText += ["NEW RELEASES", "------------"].join("\n") + "\n";
+        emailText += releases.join("\n") + "\n\n";
+        emailHTML += `<h1><b>New releases</b></h1><p>` + releases.join("</p><p>") + "</p>";
     }
-    if (body) {
-        // TODO now that I know membersIn, membersOut, callings, and releases now I have to send email
-        console.log(body);
+    if (emailText && sendgridAPIKey) {
+        console.log(emailText);
+        mail_1.default.setApiKey(sendgridAPIKey);
+        const msg = {
+            to: emailTo,
+            from: sender,
+            subject: 'Ward member changes were detected in LCR',
+            text: emailText,
+            html: emailHTML,
+        };
+        return mail_1.default
+            .send(msg)
+            .then(() => {
+            console.log(`Email sent to ${emailTo}`);
+        })
+            .catch((error) => {
+            console.error(error);
+        });
     }
     else {
         console.log(`no ward changes found`);
     }
+});
+const run = () => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
+    console.log('No test code configured');
 });
 exports.run = run;

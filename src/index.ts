@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-import { run, writeAttendanceFile, writeCallingsFile2 } from './libs/main'
+import { run, writeAttendanceFile, writeCallingsFile2, diffMembersAndCallings } from './libs/main'
 
 if (process.argv.length < 3) {
-  console.log(`Usage: node index.js callings - creates csv with all ward callings`)
-  console.log(`Usage: node index.js attendance - creates csv with class attendance for this quarter`)
-  console.log(`Usage: node index.js run - test`)
+  console.log(`Usage: node . callings - creates csv with all ward callings`)
+  console.log(`Usage: node . attendance - creates csv with class attendance for this quarter`)
+  console.log(`Usage: node . changes - computes changes in membership and callings and posts to slack and email`)
+  console.log(`Usage: node . run - test`)
   process.exit(0)
 }
 
@@ -15,6 +16,10 @@ switch (process.argv[2]) {
   }
   case "attendance": {
     writeAttendanceFile()
+    break;
+  }
+  case "changes": {
+    diffMembersAndCallings()
     break;
   }
   default: {
