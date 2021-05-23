@@ -10,6 +10,9 @@ export const updateLoginData = (): Promise<void> => {
   return cypress
     .run({
       spec: './src/cypress-tests/membership-list_spec.js',
+      config: {
+        defaultCommandTimeout: 15000
+      },
       env: {
         CHURCH_USERNAME: process.env.CHURCH_USERNAME,
         CHURCH_PASSWORD: process.env.CHURCH_PASSWORD
