@@ -2,6 +2,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const main_1 = require("./libs/main");
+const lcr_api_1 = require("./libs/lcr-api");
 if (process.argv.length < 3) {
     console.log(`Usage: node . callings - creates csv with all ward callings`);
     console.log(`Usage: node . attendance - creates csv with class attendance for this quarter`);
@@ -20,6 +21,10 @@ switch (process.argv[2]) {
     }
     case "changes": {
         main_1.diffMembersAndCallings();
+        break;
+    }
+    case "membership": {
+        lcr_api_1.fetchMembershipList();
         break;
     }
     default: {

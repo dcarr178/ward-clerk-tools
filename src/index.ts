@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { run, writeAttendanceFile, writeCallingsFile2, diffMembersAndCallings } from './libs/main'
+import { fetchMembershipList } from './libs/lcr-api'
 
 if (process.argv.length < 3) {
   console.log(`Usage: node . callings - creates csv with all ward callings`)
@@ -20,6 +21,10 @@ switch (process.argv[2]) {
   }
   case "changes": {
     diffMembersAndCallings()
+    break;
+  }
+  case "membership": {
+    fetchMembershipList()
     break;
   }
   default: {

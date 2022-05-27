@@ -30,6 +30,7 @@
     "esbuild-node:dev": "esbuild src/index.ts --bundle --sourcemap=external --outfile=index.js",
     "esbuild-node:watch": "esbuild src/index.ts --bundle --watch --sourcemap=external --outfile=index.js",
     "callings": "node index.js callings",
+    "attendance": "node index.js attendance",
     "changes": "node index.js changes"
   },
   "devDependencies": {
