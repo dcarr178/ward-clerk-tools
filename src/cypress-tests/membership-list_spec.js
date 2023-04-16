@@ -28,8 +28,7 @@ describe('Log into church website', () => {
     })
 
     // execute cypress test
-    // cy.visit('https://lcr.churchofjesuschrist.org/records/member-list?lang=eng')
-    cy.visit('https://lcr-beta.churchofjesuschrist.org/records/member-list?lang=eng')
+    cy.visit("https://lcr.churchofjesuschrist.org/records/member-list?lang=eng")
     cy.get('input[name=username]').type(`${Cypress.env('CHURCH_USERNAME')}{enter}`)
     cy.get('input[name=password]').type(`${Cypress.env('CHURCH_PASSWORD')}{enter}`)
 

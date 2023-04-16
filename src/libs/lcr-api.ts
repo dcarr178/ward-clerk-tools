@@ -61,7 +61,6 @@ export const fetchMembershipList = async (): Promise<MemberRecord[]> => {
     .then(res => res.data)
     .catch(e => {
       console.log("ERROR fetching membership list")
-      console.log(e)
     })
   if (Array.isArray(membershipList)) {
     writeFileSync("./data/membership-list.json", JSON.stringify(membershipList, null, 2))
