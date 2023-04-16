@@ -53,7 +53,7 @@ const lcrAPI = axios.create({
 
 export const fetchMembershipList = async (): Promise<MemberRecord[]> => {
   const login = await loginData()
-  const apiPath = `services/umlu/report/member-list?lang=eng&unitNumber=${login.unitNumber}`
+  const apiPath = `api/umlu/report/member-list?lang=eng&unitNumber=${login.unitNumber}`
   console.log(`fetching membership list`)
   const membershipList: MemberRecord[] = await lcrAPI.get(apiPath, {
     headers: login.requestHeaders
@@ -77,7 +77,7 @@ export const fetchMembershipList = async (): Promise<MemberRecord[]> => {
 export const fetchCallings2 = async (): Promise<Calling[]> => {
   const login = await loginData()
 
-  const apiPath = `services/report/members-with-callings?lang=eng&unitNumber=${login.unitNumber}`
+  const apiPath = `api/report/members-with-callings?lang=eng&unitNumber=${login.unitNumber}`
   console.log(`fetching callings list`)
   const callings: Calling[] = await lcrAPI.get(apiPath, {
     headers: login.requestHeaders

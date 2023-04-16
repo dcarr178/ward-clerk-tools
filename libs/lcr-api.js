@@ -47,7 +47,7 @@ const lcrAPI = axios_1.default.create({
 });
 const fetchMembershipList = () => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     const login = yield loginData();
-    const apiPath = `services/umlu/report/member-list?lang=eng&unitNumber=${login.unitNumber}`;
+    const apiPath = `api/umlu/report/member-list?lang=eng&unitNumber=${login.unitNumber}`;
     console.log(`fetching membership list`);
     const membershipList = yield lcrAPI.get(apiPath, {
         headers: login.requestHeaders
@@ -68,7 +68,7 @@ const fetchMembershipList = () => tslib_1.__awaiter(void 0, void 0, void 0, func
 exports.fetchMembershipList = fetchMembershipList;
 const fetchCallings2 = () => tslib_1.__awaiter(void 0, void 0, void 0, function* () {
     const login = yield loginData();
-    const apiPath = `services/report/members-with-callings?lang=eng&unitNumber=${login.unitNumber}`;
+    const apiPath = `api/report/members-with-callings?lang=eng&unitNumber=${login.unitNumber}`;
     console.log(`fetching callings list`);
     const callings = yield lcrAPI.get(apiPath, {
         headers: login.requestHeaders
