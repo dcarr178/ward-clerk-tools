@@ -52,7 +52,11 @@ const fetchMembershipList = () => tslib_1.__awaiter(void 0, void 0, void 0, func
     const membershipList = yield lcrAPI.get(apiPath, {
         headers: login.requestHeaders
     })
-        .then(res => res.data);
+        .then(res => res.data)
+        .catch(e => {
+        console.log("ERROR fetching membership list");
+        console.log(e);
+    });
     if (Array.isArray(membershipList)) {
         fs_1.writeFileSync("./data/membership-list.json", JSON.stringify(membershipList, null, 2));
         return membershipList;
