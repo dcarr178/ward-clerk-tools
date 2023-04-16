@@ -28,15 +28,11 @@ describe('Log into church website', () => {
     })
 
     // execute cypress test
-    cy.visit("https://lcr.churchofjesuschrist.org/records/member-list?lang=eng")
+    cy.visit("https://lcr.churchofjesuschrist.org")
     cy.get('input[name=username]').type(`${Cypress.env('CHURCH_USERNAME')}{enter}`)
     cy.get('input[name=password]').type(`${Cypress.env('CHURCH_PASSWORD')}{enter}`)
 
-    // this works even on beta acceptance page so that sucks
-    // cy.get('platform-header').shadow().find("#appLink").should('contain', 'Leader and Clerk Resources')
-
-    // find beta no thanks button
-    cy.get("button").contains("No, thanks").click()
+    cy.get('platform-header').shadow().find("#slimLogo").should('contain', 'Church of Jesus Christ of Latter-day Saints')
 
     // now go to member list page
     cy.visit('https://lcr.churchofjesuschrist.org/records/member-list?lang=eng')

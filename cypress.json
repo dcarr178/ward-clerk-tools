@@ -1,3 +1,4 @@
 {
-  "integrationFolder": "./src"
+  "integrationFolder": "./src",
+  "pageLoadTimeout": 120000
 }
