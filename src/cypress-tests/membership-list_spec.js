@@ -18,7 +18,7 @@ describe('Log into church website', () => {
     cy.server()
 
     // configure intercept for member-list
-    cy.intercept('https://lcr.churchofjesuschrist.org/services/umlu/unit-org*', (req) => {
+    cy.intercept('https://lcr.churchofjesuschrist.org/api/umlu/unit-org*', (req) => {
 
       // capture request headers and unitNumber to local file
       const url = new URL(req.url);
