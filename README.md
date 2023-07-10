@@ -14,6 +14,9 @@ The church provides no support or documentation for their api endpoints and brow
 application so the implicit system contracts these tools rely on could break at any time without notice, rendering
 the tools worthless without additional code maintenance and tweaks.
 
+## For class attendance hacks
+See CLASS_ATTENDANCE.md.
+
 ## Initialization
 Prior to installing this software, you must have [git](https://git-scm.com/downloads) and [nodejs/npm](https://nodejs.org/en/download/) installed on your computer.
 
