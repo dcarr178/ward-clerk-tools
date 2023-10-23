@@ -32,7 +32,7 @@ describe('Log into church website', () => {
     cy.get('input[name=username]').type(`${Cypress.env('CHURCH_USERNAME')}{enter}`)
     cy.get('input[name=password]').type(`${Cypress.env('CHURCH_PASSWORD')}{enter}`)
 
-    cy.get('platform-header').shadow().find("#slimLogo").should('contain', 'Church of Jesus Christ of Latter-day Saints')
+    cy.get('platform-header').shadow().find("#symbolContainer").should('contain', 'Leader and Clerk Resources')
 
     // now go to member list page
     cy.visit('https://lcr.churchofjesuschrist.org/records/member-list?lang=eng')
